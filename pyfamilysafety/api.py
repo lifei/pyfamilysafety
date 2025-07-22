@@ -171,14 +171,14 @@ class FamilySafetyAPI:
                     "request": {
                         "appId": request.get("id"),
                         "extension": extension_time,
-                        "isGlobal": True,
+                        "isGlobal": False,
                         "lockTime": request.get("lockTime"),
                         "platform": request.get("platform"),
-                        "requestedTime": request.get("requestedTime")
+                        "requestedTime": request.get("requestedTime"),
                     },
-                    "type": request.get("type")
+                    "type": request.get("type"),
                 },
-                user_id=request["puid"]
+                user_id=request["puid"],
             )
         return await self.async_deny_pending_request(
             body={

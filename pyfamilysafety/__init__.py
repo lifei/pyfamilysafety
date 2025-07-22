@@ -51,13 +51,13 @@ class FamilySafety:
         if callback in self._pending_request_callbacks:
             self._pending_request_callbacks.remove(callback)
 
-    async def _get_pending_requests(self):
+    async def get_pending_requests(self):
         """Returns pending requests on the account."""
         response = await self._api.send_request("get_pending_requests")
         self.pending_requests = response.get("json").get("pendingRequests", [])
         # restrict pending requests to only screentime, other types not supported yet
-        self.pending_requests = [
-            x for x in self.pending_requests if x["type"] == "DeviceScreenTime"]
+        # self.pending_requests = [
+        #    x for x in self.pending_requests if x["type"] == "DeviceScreenTime"]
         for cb in self._pending_request_callbacks:
             if is_awaitable(cb):
                 await cb()
@@ -75,7 +75,7 @@ class FamilySafety:
             extension_time
         )
 
-        await self._get_pending_requests()
+        await self.get_pending_requests()
         return response["status"] == 204
 
     async def deny_pending_request(self, request_id) -> bool:
@@ -85,7 +85,7 @@ class FamilySafety:
             request,
             False
         )
-        await self._get_pending_requests()
+        await self.get_pending_requests()
         return response["status"] == 204
 
     async def update(self):
@@ -100,7 +100,7 @@ class FamilySafety:
                 )
             coros = []
             if self.experimental:
-                coros.append(self._get_pending_requests())
+                coros.append(self.get_pending_requests())
             for account in self.accounts:
                 coros.append(account.update())
             await asyncio.gather(*coros)
