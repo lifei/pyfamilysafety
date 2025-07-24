@@ -23,17 +23,14 @@ _LOGGER = logging.getLogger(__name__)
 class Authenticator:
     """The base authenticator class."""
 
-    def __init__(
-            self,
-            client_session: aiohttp.ClientSession = None
-        ) -> None:
+    def __init__(self, client_session: aiohttp.ClientSession | None = None) -> None:
         """init the class."""
         _LOGGER.debug(">> Init authenticator.")
-        self.expires: datetime = None
-        self.refresh_token: str = None
-        self._access_token: str = None
-        self.user_id: str = None
-        self._ppft: str = None
+        self.expires: datetime = datetime.now()
+        self.refresh_token: str | None = None
+        self._access_token: str | None = None
+        self.user_id: str | None = None
+        self._ppft: str | None = None
         self._login_lock: asyncio.Lock = asyncio.Lock()
         if client_session is None:
             client_session = aiohttp.ClientSession()
