@@ -76,7 +76,7 @@ class FamilySafety:
         )
 
         await self.get_pending_requests()
-        return response["status"] == 204
+        return response["status"] == 204 or response["status"] == 201
 
     async def deny_pending_request(self, request_id) -> bool:
         """Deny a pending request."""

@@ -2,6 +2,7 @@
 """pyfamilysafety API request handler."""
 
 import logging
+from math import e
 
 import aiohttp
 import aiohttp.client_exceptions
@@ -23,7 +24,14 @@ class FamilySafetyAPI:
         self._auth: Authenticator = auth
         self.pending_requests = []
 
-    async def send_request(self, endpoint: str, body: object=None, headers: dict=None, platform: str=None, **kwargs):
+    async def send_request(
+        self,
+        endpoint: str,
+        body: object = None,
+        headers: dict | None = None,
+        platform: str | None = None,
+        **kwargs,
+    ):
         """Sends a request to a given endpoint."""
         _LOGGER.debug("Sending request to %s", endpoint)
         # Get the endpoint from the endpoints map
@@ -45,6 +53,11 @@ class FamilySafetyAPI:
 
         # format the URL using the kwargs
         url = e_point.get("url")
+        if not url:
+            raise ValueError("Endpoint URL is not defined")
+        method = e_point.get("method")
+        if not method:
+            raise ValueError("Endpoint method is not defined")
         if "{BASE_URL" in url:
             url = url.format(BASE_URL=BASE_URL, **kwargs)
         else:
@@ -58,10 +71,7 @@ class FamilySafetyAPI:
             "headers": ""
         }
         async with self._auth.client_session.request(
-            method=e_point.get("method"),
-            url=url,
-            json=body,
-            headers=headers
+            method=method, url=url, json=body, headers=headers
         ) as response:
             _LOGGER.debug("Request to %s status code %s", url, response.status)
             if _check_http_success(response.status):
@@ -165,19 +175,23 @@ class FamilySafetyAPI:
     ):
         """Process a pending request using the deny and approve pending request method"""
         if approved:
-            return await self.async_approve_pending_request(
-                body={
-                    "id": request.get("id"),
-                    "request": {
-                        "appId": request.get("id"),
-                        "extension": extension_time,
-                        "isGlobal": False,
-                        "lockTime": request.get("lockTime"),
-                        "platform": request.get("platform"),
-                        "requestedTime": request.get("requestedTime"),
-                    },
-                    "type": request.get("type"),
+            body = {
+                "id": request.get("id"),
+                "request": {
+                    "appId": request.get("id"),
+                    "extension": extension_time,
+                    "isGlobal": request.get("isGlobal"),
+                    "lockTime": request.get("lockTime"),
+                    "platform": request.get("platform"),
+                    "requestedTime": request.get("requestedTime"),
                 },
+                "type": request.get("type"),
+            }
+            if request.get("appName"):
+                body["request"]["appName"] = request.get("appName")
+
+            return await self.async_approve_pending_request(
+                body=body,
                 user_id=request["puid"],
             )
         return await self.async_deny_pending_request(
