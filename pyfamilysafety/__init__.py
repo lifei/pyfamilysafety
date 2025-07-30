@@ -54,7 +54,8 @@ class FamilySafety:
     async def get_pending_requests(self):
         """Returns pending requests on the account."""
         response = await self._api.send_request("get_pending_requests")
-        self.pending_requests = response.get("json").get("pendingRequests", [])
+        j = response.get("json")
+        self.pending_requests = j.get("pendingRequests", []) if j else []
         # restrict pending requests to only screentime, other types not supported yet
         # self.pending_requests = [
         #    x for x in self.pending_requests if x["type"] == "DeviceScreenTime"]
@@ -67,7 +68,7 @@ class FamilySafety:
 
     async def approve_pending_request(self, request_id, extension_time) -> bool:
         """Approves a pending request and grants an extension in seconds."""
-        extension_time = extension_time*100 # convert seconds to ms
+        extension_time = extension_time * 1000  # convert seconds to ms
         request = self.get_request(request_id)
         response = await self._api.async_process_pending_request(
             request,
